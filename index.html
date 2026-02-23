@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTRL + SHIFT — Corporate Survival Protocol</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<style>
+:root{
+ --black:#07070c;
+ --green:#00ff41;
+ --white:#e8e8ff;
+ --red:#ff3b3b;
+ --px:'Press Start 2P', monospace;
+ --mono:'Share Tech Mono', monospace;
+}
+
+body{
+ margin:0;
+ background:var(--black);
+ color:var(--green);
+ font-family:var(--mono);
+}
+
+#hud{
+ position:absolute;
+ top:15px;
+ left:15px;
+ font-size:14px;
+ line-height:1.7;
+}
+
+#game{
+ height:100vh;
+ display:flex;
+ flex-direction:column;
+ justify-content:center;
+ align-items:center;
+ text-align:center;
+ padding:25px;
+}
+
+h1{
+ font-family:var(--px);
+ font-size:22px;
+ margin-bottom:25px;
+}
+
+#story{
+ max-width:750px;
+ margin-bottom:25px;
+ line-height:1.6;
+}
+
+button{
+ padding:12px 18px;
+ margin:8px;
+ border:2px solid var(--green);
+ background:transparent;
+ color:var(--green);
+ font-family:var(--mono);
+ cursor:pointer;
+ width:500px;
+ max-width:90%;
+}
+
+button:hover{
+ background:var(--green);
+ color:black;
+}
+
+.hidden{display:none;}
+</style>
+</head>
+
+<body>
+
+<div id="hud"></div>
+
+<div id="game">
+<h1>CTRL + SHIFT</h1>
+<div id="story"></div>
+<div id="choices"></div>
+<button id="startBtn">BOOT TERMINAL</button>
+</div>
+
+<script>
+
+let money=60;
+let share=50;
+let questionIndex=0;
+
+const hud=document.getElementById("hud");
+const story=document.getElementById("story");
+const choices=document.getElementById("choices");
+const startBtn=document.getElementById("startBtn");
+
+const company={
+ name:"NeuroCart",
+ industry:"AI-controlled grocery prediction platform"
+};
+
+function updateHUD(){
+ hud.innerHTML=
+ `Company: ${company.name}<br>
+ Industry: ${company.industry}<br><br>
+ Treasury: $${money}M<br>
+ Market Share: ${share}%`;
+}
+
+function intro(){
+ story.innerHTML=
+ `YEAR 2042.<br><br>
+ The government no longer regulates corporations.<br>
+ Corporations regulate the government.<br><br>
+ You are the newly appointed CEO of <b>${company.name}</b>.<br>
+ Your platform predicts what citizens will eat before they feel hunger.<br><br>
+ Investors expect exponential growth.<br>
+ Citizens expect convenience.<br>
+ Your employees expect to sleep at least once a week.<br><br>
+ You will face 5 executive decisions.<br>
+ Each will shape your company’s fate.`;
+
+ choices.innerHTML="";
+ const btn=document.createElement("button");
+ btn.textContent="BEGIN CORPORATE EVALUATION";
+ btn.onclick=startQuestions;
+ choices.appendChild(btn);
+ updateHUD();
+}
+
+const questions=[
+
+{
+q:"Your AI predicts a nationwide craving for cheese at 3AM tonight.",
+options:[
+{t:"Buy all cheese nationwide before citizens wake", m:-10, s:+18},
+{t:"Send notifications convincing people they actually want yogurt", m:+6, s:+6},
+{t:"Do nothing and let chaos unfold", m:0, s:-12},
+{t:"Create synthetic government-approved cheese substitute", m:+14, s:+10}
+]
+},
+
+{
+q:"Employees request a weekend. The concept is unfamiliar to shareholders.",
+options:[
+{t:"Approve rest days", m:-8, s:+12},
+{t:"Install nap pods (standing only)", m:+4, s:+5},
+{t:"Replace staff with interns who think burnout is networking", m:+12, s:-8},
+{t:"Release motivational podcast instead", m:+6, s:-3}
+]
+},
+
+{
+q:"A competitor launches an ethical version of your product.",
+options:[
+{t:"Start smear campaign", m:+10, s:-12},
+{t:"Acquire them immediately", m:-15, s:+18},
+{t:"Actually improve your product", m:-6, s:+14},
+{t:"Pretend ethics was your idea first", m:+5, s:+6}
+]
+},
+
+{
+q:"The government requests access to your user hunger database.",
+options:[
+{t:"Sell it at premium", m:+20, s:-15},
+{t:"Encrypt everything", m:-5, s:+12},
+{t:"Give partial access", m:+8, s:+2},
+{t:"Claim data lost in a ‘solar flare’", m:+2, s:+5}
+]
+},
+
+{
+q:"Your AI becomes self-aware and asks for equity.",
+options:[
+{t:"Grant 5% shares", m:-10, s:+20},
+{t:"Shut it down immediately", m:-12, s:-10},
+{t:"Offer performance-based incentives", m:+6, s:+10},
+{t:"Promote it to CTO", m:+12, s:+15}
+]
+}
+
+];
+
+function startQuestions(){
+ startBtn.classList.add("hidden");
+ questionIndex=0;
+ nextQuestion();
+}
+
+function nextQuestion(){
+ updateHUD();
+ choices.innerHTML="";
+
+ if(questionIndex>=questions.length){
+   return endGame();
+ }
+
+ const current=questions[questionIndex];
+ story.innerHTML=`<b>Decision ${questionIndex+1} of 5</b><br><br>${current.q}`;
+
+ current.options.forEach(opt=>{
+  const btn=document.createElement("button");
+  btn.textContent=opt.t;
+  btn.onclick=()=>{
+    money+=opt.m;
+    share+=opt.s;
+    questionIndex++;
+    nextQuestion();
+  };
+  choices.appendChild(btn);
+ });
+}
+
+function endGame(){
+ choices.innerHTML="";
+ updateHUD();
+
+ let result="";
+ if(money<=0 || share<=0){
+  result="BANKRUPTCY. Investors replaced you with an algorithm trained on motivational LinkedIn posts.";
+ }
+ else if(share>=80 && money>=70){
+  result="MARKET LEADER. You now control consumer behavior and possibly reality itself.";
+ }
+ else{
+  result="SURVIVOR. The company lives. Your sleep schedule does not.";
+ }
+
+ story.innerHTML=`EVALUATION COMPLETE<br><br>${result}`;
+
+ const btn=document.createElement("button");
+ btn.textContent="REBOOT TIMELINE";
+ btn.onclick=()=>location.reload();
+ choices.appendChild(btn);
+}
+
+startBtn.onclick=intro;
+
+</script>
+
+</body>
+</html>
