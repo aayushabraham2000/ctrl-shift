@@ -2,17 +2,114 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CTRL + SHIFT</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
 <style>
-body{margin:0;background:#07070c;color:#00ff41;font-family:'Share Tech Mono',monospace;}
-#game{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;}
-#story{max-width:900px;margin-bottom:20px;min-height:150px;line-height:1.6;}
-button{padding:10px;margin:6px;border:2px solid #00ff41;background:transparent;color:#00ff41;width:760px;max-width:95%;cursor:pointer;text-align:left;}
-button:hover{background:#00ff41;color:black;}
-input{padding:8px;border:2px solid #00ff41;background:black;color:#00ff41;margin:8px;width:350px;}
-#hud{position:absolute;top:15px;left:15px;font-size:13px;line-height:1.5;}
-h1{font-family:'Press Start 2P';font-size:18px;}
+
+body{
+margin:0;
+background:#07070c;
+color:#00ff41;
+font-family:'Share Tech Mono',monospace;
+overflow-x:hidden;
+}
+
+#game{
+min-height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+text-align:center;
+padding:20px;
+box-sizing:border-box;
+}
+
+h1{
+font-family:'Press Start 2P';
+font-size:clamp(14px, 4vw, 20px);
+margin-bottom:20px;
+}
+
+#story{
+max-width:900px;
+width:100%;
+margin-bottom:20px;
+min-height:140px;
+line-height:1.6;
+font-size:clamp(14px, 3.5vw, 18px);
+}
+
+#choices{
+width:100%;
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+button{
+padding:14px;
+margin:8px 0;
+border:2px solid #00ff41;
+background:transparent;
+color:#00ff41;
+width:100%;
+max-width:750px;
+cursor:pointer;
+text-align:left;
+font-size:clamp(14px, 3.5vw, 18px);
+box-sizing:border-box;
+}
+
+button:hover{
+background:#00ff41;
+color:black;
+}
+
+input{
+padding:12px;
+border:2px solid #00ff41;
+background:black;
+color:#00ff41;
+margin:8px 0;
+width:100%;
+max-width:400px;
+font-size:16px;
+box-sizing:border-box;
+}
+
+#hud{
+position:fixed;
+top:10px;
+left:10px;
+font-size:clamp(11px, 3vw, 14px);
+line-height:1.4;
+text-align:left;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px){
+
+#hud{
+position:static;
+margin-bottom:20px;
+text-align:center;
+}
+
+#game{
+justify-content:flex-start;
+padding-top:20px;
+}
+
+button{
+text-align:center;
+}
+
+}
+
 </style>
 </head>
 <body>
@@ -89,9 +186,9 @@ products:{
 
 function updateHUD(){
 hud.innerHTML=`
-CEO: ${company}<br>
-Industry: ${industry}<br>
-Product: ${product}<br><br>
+<strong>${company}</strong><br>
+Industry: ${industry || "-"}<br>
+Product: ${product || "-"}<br><br>
 Cash: $${cash}M<br>
 Market Share: ${market}%<br>
 Share Price: ${share}
@@ -113,10 +210,11 @@ chooseIndustry();
 };
 choices.appendChild(nameInput);
 choices.appendChild(btn);
+updateHUD();
 }
 start();
 
-/* ================= INDUSTRY SELECTION ================= */
+/* ================= INDUSTRY ================= */
 
 function chooseIndustry(){
 story.innerHTML="Select Industry";
@@ -124,12 +222,12 @@ choices.innerHTML="";
 Object.keys(industries).forEach(i=>{
 let b=document.createElement("button");
 b.innerHTML=`<strong>${i}</strong><br>${industries[i].desc}`;
-b.onclick=()=>{industry=i; chooseProduct();};
+b.onclick=()=>{industry=i; chooseProduct(); updateHUD();};
 choices.appendChild(b);
 });
 }
 
-/* ================= PRODUCT SELECTION ================= */
+/* ================= PRODUCT ================= */
 
 function chooseProduct(){
 story.innerHTML=`${industries[industry].desc}<br><br>Select Product`;
@@ -137,7 +235,7 @@ choices.innerHTML="";
 Object.keys(industries[industry].products).forEach(p=>{
 let b=document.createElement("button");
 b.innerHTML=`<strong>${p}</strong><br>${industries[industry].products[p]}`;
-b.onclick=()=>{product=p; fundRaise();};
+b.onclick=()=>{product=p; fundRaise(); updateHUD();};
 choices.appendChild(b);
 });
 }
@@ -182,7 +280,7 @@ choices.appendChild(b);
 });
 }
 
-/* ================= QUESTION ENGINE ================= */
+/* ================= QUESTIONS ================= */
 
 function generateQuestions(){
 
@@ -266,7 +364,6 @@ b.onclick=()=>{
 cash+=o.c;
 market+=o.m;
 share+=o.s;
-history.push(o.con);
 story.innerHTML=o.con;
 choices.innerHTML="";
 let next=document.createElement("button");
@@ -288,13 +385,15 @@ choices.appendChild(b);
 function finalReport(){
 
 let performanceStory = `
-In the ${industry} economy, ${company} shaped its destiny through calculated risks and decisive pivots. 
-Each move — from capital strategy to competitive response — compounded into momentum or restraint. 
-Now holding ${market}% of the market, with $${cash}M in reserves and a share price of ${share}, 
-the company stands as ${market>50 ? "a dominant force rewriting its category." :
-share>150 ? "a high-flying disruptor still balancing risk." :
-cash<80 ? "an ambitious venture constrained by capital." :
-"a resilient player navigating uncertainty with discipline."}
+In the ${industry} economy, ${company} shaped its destiny through bold decisions and calculated restraint. 
+Each strategic move compounded into momentum — or limitation. 
+With ${market}% market share, $${cash}M in capital, and a share price of ${share}, 
+the company stands as ${
+market>50 ? "a dominant force rewriting its category." :
+share>150 ? "a high-flying disruptor balancing risk and ambition." :
+cash<80 ? "an ambitious venture constrained by capital pressure." :
+"a resilient operator navigating uncertainty with discipline."
+}
 `;
 
 story.innerHTML=performanceStory;
