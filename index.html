@@ -1,101 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CTRL + SHIFT — Corporate Survival Protocol</title>
-
+<title>CTRL + SHIFT</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-
 <style>
-:root{
- --black:#07070c;
- --green:#00ff41;
- --white:#e8e8ff;
- --red:#ff3b3b;
- --px:'Press Start 2P', monospace;
- --mono:'Share Tech Mono', monospace;
-}
-
-body{
- margin:0;
- background:var(--black);
- color:var(--green);
- font-family:var(--mono);
-}
-
-#hud{
- position:absolute;
- top:15px;
- left:15px;
- font-size:13px;
- line-height:1.6;
-}
-
-#game{
- height:100vh;
- display:flex;
- flex-direction:column;
- justify-content:center;
- align-items:center;
- text-align:center;
- padding:25px;
-}
-
-h1{
- font-family:var(--px);
- font-size:20px;
- margin-bottom:20px;
-}
-
-#story{
- max-width:820px;
- margin-bottom:20px;
- line-height:1.6;
-}
-
-button{
- padding:10px 15px;
- margin:8px;
- border:2px solid var(--green);
- background:transparent;
- color:var(--green);
- font-family:var(--mono);
- cursor:pointer;
- width:600px;
- max-width:95%;
- text-align:left;
-}
-
-button:hover{
- background:var(--green);
- color:black;
-}
-
-.industry-title{
- font-weight:bold;
-}
-
-.industry-desc{
- font-size:13px;
- opacity:0.8;
- margin-top:4px;
-}
-
-input{
- padding:8px;
- background:black;
- border:2px solid var(--green);
- color:var(--green);
- font-family:var(--mono);
- margin:8px;
- width:300px;
-}
-
-.hidden{display:none;}
+body{margin:0;background:#07070c;color:#00ff41;font-family:'Share Tech Mono',monospace;}
+#game{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;}
+#story{max-width:900px;margin-bottom:20px;min-height:140px;line-height:1.6;}
+button{padding:10px;margin:6px;border:2px solid #00ff41;background:transparent;color:#00ff41;width:720px;max-width:95%;cursor:pointer;text-align:left;}
+button:hover{background:#00ff41;color:black;}
+input{padding:8px;border:2px solid #00ff41;background:black;color:#00ff41;margin:10px;}
+#hud{position:absolute;top:15px;left:15px;font-size:13px;line-height:1.5;}
+h1{font-family:'Press Start 2P';font-size:18px;}
 </style>
 </head>
-
 <body>
 
 <div id="hud"></div>
@@ -108,326 +27,259 @@ input{
 
 <script>
 
-/* =========================
-GLOBAL STATE
-========================= */
+/* ================= STATE ================= */
 
-let email="";
-let companyName="";
-let industry="";
-let product="";
-let day=0;
-
-let cash=0;
-let marketShare=0;
-let sharePrice=100;
-
-let questionIndex=0;
+let company="", industry="", product="";
+let cash=100, market=15, share=100;
+let qIndex=0;
+let currentSet=[];
 
 const story=document.getElementById("story");
 const choices=document.getElementById("choices");
 const hud=document.getElementById("hud");
 
-/* =========================
-INDUSTRY DATA
-========================= */
+/* ================= INDUSTRY + PRODUCT CONTEXT ================= */
 
-const industries = {
+const data = {
 
 "Nostalgia Trap":{
-desc:`Real life feels sterile. The past is now a premium subscription.`,
-products:[
-{ name:"Scent-Memory Candles", desc:"Smells like 1997. Sounds like grunge. Burns like emotional trauma." },
-{ name:"Retro-Lens Contacts", desc:"Filter reality into grainy cinematic longing." },
-{ name:"First-Love Chewing Gum", desc:"Recreates teenage butterflies. Side effects: regret." },
-{ name:"Analog Dead Zones", desc:"Pay hourly to lose signal and rediscover silence." }
-]
+desc:"Real life has become sterile and hyper-digitized. The past is now the most expensive commodity.",
+products:{
+"Scent-Memory Candles":"Candles that release curated 90s-era scent notes and embedded vinyl audio nostalgia.",
+"Retro-Lens Contacts":"Wearable lenses that filter reality into grainy 35mm emotional cinema.",
+"First-Love Chewing Gum":"Biochemical gum that recreates the hormonal rush of teenage butterflies.",
+"Analog Dead Zones":"Signal-free physical spaces where people pay to disconnect."
+}
 },
 
 "Weather Paywall":{
-desc:`Sunsets, breeze and rain are now pay-per-use experiences.`,
-products:[
-{ name:"Pocket-Sun Flashlights", desc:"Portable Vitamin D for the light-deprived elite." },
-{ name:"Subscription Rain-Clouds", desc:"Because nature should be on auto-renew." },
-{ name:"Snow-in-a-Can", desc:"Instant winter aesthetic. No climate required." },
-{ name:"Wind-Chill Scarves", desc:"Maintains perfect 20°C while the planet burns." }
-]
+desc:"Climate collapse has privatized nature. Breeze, sunlight and snow are subscription experiences.",
+products:{
+"Pocket-Sun Flashlights":"Portable devices that emit calibrated Vitamin D sunlight.",
+"Subscription Rain-Clouds":"On-demand atmospheric systems for private rainfall.",
+"Snow-in-a-Can":"Compressed aesthetic snowfall for events and luxury experiences.",
+"Wind-Chill Scarves":"Wearable thermoregulators that maintain a perfect 20°C."
+}
 },
 
 "Flavor Debt":{
-desc:`Soil is dead. Taste is now downloadable.`,
-products:[
-{ name:"Electric Truffle Spoons", desc:"Turns sludge into Michelin illusion." },
-{ name:"Flavor-Sync Water App", desc:"Hydration that tastes like iced coffee." },
-{ name:"Sizzling-Audio Headphones", desc:"Make soft food sound crunchy. Mind over matter." },
-{ name:"The Last Burger NFT", desc:"Digital key to the final real cow on Earth." }
-]
+desc:"Natural food has lost flavor. Taste is now digitally engineered.",
+products:{
+"Electric Truffle Spoons":"Utensils that electrically simulate premium flavors.",
+"Flavor-Sync Apps":"Apps that overlay taste sensations onto water and neutral foods.",
+"Sizzling-Audio Headphones":"Audio tech that tricks the brain into perceiving crunch.",
+"Last Burger NFT":"A blockchain key granting symbolic ownership of the last real cow."
+}
 },
 
 "Nightmare Insurance":{
-desc:`Advertisements now invade dreams. Sleep is monetized.`,
-products:[
-{ name:"Firewall Pillows", desc:"Block 3AM mattress commercials inside your head." },
-{ name:"Dream-Security AI", desc:"Fights debt-collector demons mid-REM." },
-{ name:"Nightmare-to-Comedy Converter", desc:"Turn falling dreams into flying." },
-{ name:"Sleep-State Encryption Keys", desc:"Biometric locks for your subconscious." }
-]
+desc:"Dreams are neural-linked and vulnerable to advertising hacks.",
+products:{
+"Firewall Pillows":"Signal-blocking sleep hardware.",
+"Dream-Security AI":"AI that intercepts subconscious ad intrusions.",
+"Nightmare-to-Comedy Converter":"Dream modulation software turning fear into levity.",
+"Sleep-State Encryption Keys":"Biometric locks securing dream access."
+}
 }
 
 };
 
-/* =========================
-HUD
-========================= */
+/* ================= HUD ================= */
 
 function updateHUD(){
 hud.innerHTML=`
-CEO: ${companyName || "-"}<br>
-Industry: ${industry || "-"}<br>
-Product: ${product || "-"}<br><br>
-Day: ${day}<br>
+CEO: ${company}<br>
+Industry: ${industry}<br>
+Product: ${product}<br><br>
 Cash: $${cash}M<br>
-Market Share: ${marketShare}%<br>
-Share Price: ${sharePrice}
+Market Share: ${market}%<br>
+Share Price: ${share}
 `;
 }
 
-/* =========================
-LOGIN
-========================= */
+/* ================= LOGIN ================= */
 
-function login(){
-story.innerHTML="ENTER EMAIL TO ACCESS TERMINAL";
+function start(){
+story.innerHTML="Enter your company name to begin.";
 choices.innerHTML="";
-const input=document.createElement("input");
-input.placeholder="email@future.com";
-const btn=document.createElement("button");
-btn.textContent="ACCESS SYSTEM";
+let input=document.createElement("input");
+let btn=document.createElement("button");
+btn.textContent="Initialize";
 btn.onclick=()=>{
- email=input.value;
- createBusiness();
+company=input.value||"Unnamed Corp";
+chooseIndustry();
 };
 choices.appendChild(input);
 choices.appendChild(btn);
 }
+start();
 
-login();
+/* ================= INDUSTRY SELECTION ================= */
 
-/* =========================
-CREATE BUSINESS FLOW
-========================= */
-
-function createBusiness(){
-story.innerHTML="SELECT INDUSTRY";
+function chooseIndustry(){
+story.innerHTML="Select Industry";
 choices.innerHTML="";
-
-Object.keys(industries).forEach(ind=>{
- const btn=document.createElement("button");
- btn.innerHTML=`
- <div class="industry-title">${ind}</div>
- <div class="industry-desc">${industries[ind].desc}</div>
- `;
- btn.onclick=()=>{
-   industry=ind;
-   chooseProduct();
- };
- choices.appendChild(btn);
+Object.keys(data).forEach(i=>{
+let b=document.createElement("button");
+b.innerHTML=`<strong>${i}</strong><br>${data[i].desc}`;
+b.onclick=()=>{industry=i; chooseProduct();};
+choices.appendChild(b);
 });
 }
+
+/* ================= PRODUCT SELECTION ================= */
 
 function chooseProduct(){
-story.innerHTML=`${industries[industry].desc}<br><br>SELECT PRODUCT`;
+story.innerHTML=`${data[industry].desc}<br><br>Select Product`;
 choices.innerHTML="";
-
-industries[industry].products.forEach(p=>{
- const btn=document.createElement("button");
- btn.innerHTML=`
- <div class="industry-title">${p.name}</div>
- <div class="industry-desc">${p.desc}</div>
- `;
- btn.onclick=()=>{
-   product=p.name;
-   nameCompany();
- };
- choices.appendChild(btn);
+Object.keys(data[industry].products).forEach(p=>{
+let b=document.createElement("button");
+b.innerHTML=`<strong>${p}</strong><br>${data[industry].products[p]}`;
+b.onclick=()=>{product=p; beginSimulation();};
+choices.appendChild(b);
 });
 }
 
-function nameCompany(){
-story.innerHTML="NAME YOUR COMPANY";
-choices.innerHTML="";
-const input=document.createElement("input");
-input.placeholder="Enter company name";
-const btn=document.createElement("button");
-btn.textContent="FINALIZE ENTITY";
-btn.onclick=()=>{
- companyName=input.value || "Unnamed Corp";
- day0();
-};
-choices.appendChild(input);
-choices.appendChild(btn);
-}
+/* ================= QUESTION GENERATOR ================= */
 
-/* =========================
-DAY 0 FUNDRAISE
-========================= */
-
-function day0(){
-day=0;
-story.innerHTML=`DAY 0: FUND RAISE<br><br>Choose pitch tone:`;
-choices.innerHTML="";
-
-["Visionary & Inspirational","Aggressive Hypergrowth","Safe & Sustainable","Chaotic Disruptor"].forEach(tone=>{
- const btn=document.createElement("button");
- btn.textContent=tone;
- btn.onclick=()=>chooseFunding();
- choices.appendChild(btn);
-});
+function beginSimulation(){
+cash=100; market=15; share=100; qIndex=0;
+generateQuestions();
 updateHUD();
-}
-
-function chooseFunding(){
-story.innerHTML=`Funding Structure?`;
-choices.innerHTML="";
-
-[
-{t:"All Equity",cash:80},
-{t:"All Debt",cash:120},
-{t:"Balanced Mix",cash:100}
-].forEach(opt=>{
- const btn=document.createElement("button");
- btn.textContent=opt.t;
- btn.onclick=()=>{
-   cash=opt.cash;
-   marketShare=10+Math.floor(Math.random()*10);
-   sharePrice=100;
-   day=1;
-   dailyLoop();
- };
- choices.appendChild(btn);
-});
-}
-
-/* =========================
-DAILY LOOP
-========================= */
-
-function dailyLoop(){
-questionIndex=0;
 nextQuestion();
-updateHUD();
 }
 
-const dailyQuestions=[
+function generateQuestions(){
+
+function opt(t,c,m,s,con){return{t,c,m,s,con};}
+
+currentSet=[
+
 {
-q:"Your product goes viral overnight.",
+context:`${company} launches its ${product} in the ${industry} sector. Early adopters are intrigued, but demand is unpredictable.`,
+question:"How do you manage initial growth?",
 options:[
-{t:"Scale aggressively",c:-20,m:+10,p:+5},
-{t:"Increase prices quietly",c:+10,m:-3,p:+10},
-{t:"Limit supply",c:+5,m:+6,p:+5},
-{t:"Ignore hype",c:0,m:-5,p:-5}
+opt("Increase pricing to test willingness to pay",20,-2,15,"Margins improve, but adoption slows slightly."),
+opt("Scale production aggressively",-25,12,8,"Growth accelerates, but cash reserves thin."),
+opt("Launch limited edition batch",10,6,12,"Exclusivity strengthens brand perception."),
+opt("License technology early",25,8,-5,"Cash rises quickly, though long-term control weakens.")
 ]
 },
+
 {
-q:"Employees demand ethical clarity.",
+context:`Media scrutiny rises around the societal implications of ${product}. Analysts debate ethics versus innovation.`,
+question:"What is your strategic communication move?",
 options:[
-{t:"Adopt transparency",c:-10,m:+8,p:+8},
-{t:"Release corporate poem",c:+5,m:-3,p:+3},
-{t:"Fire critics",c:+10,m:-10,p:-10},
-{t:"Hire PR agency",c:-5,m:+2,p:+6}
+opt("Publish transparent impact study",-15,8,18,"Credibility improves and investor trust strengthens."),
+opt("Reposition messaging toward lifestyle benefits",-10,6,8,"Consumer sentiment stabilizes modestly."),
+opt("Lobby regulators quietly",-20,3,10,"Short-term protection boosts stability but raises governance concerns."),
+opt("Ignore and focus on revenue",5,-8,-12,"Share price dips as uncertainty grows.")
 ]
 },
+
 {
-q:"Regulator threatens audit.",
+context:`A competitor undercuts pricing with a simplified version of ${product}.`,
+question:"Your competitive response?",
 options:[
-{t:"Lobby quietly",c:-15,m:+5,p:+10},
-{t:"Go fully transparent",c:-10,m:+12,p:+8},
-{t:"Move HQ offshore",c:-5,m:-5,p:+5},
-{t:"Blame interns",c:+8,m:-10,p:-8}
+opt("Differentiate with premium positioning",-10,8,20,"Brand equity increases valuation resilience."),
+opt("Engage in price war",-30,15,-8,"Market share rises but margins erode."),
+opt("Acquire competitor",-40,20,18,"Dominance grows though balance sheet risk rises."),
+opt("Focus on niche segment",5,-3,10,"Profitability steadies but expansion slows.")
 ]
 },
+
 {
-q:"Customer sentiment shifts.",
+context:`Internal leadership questions whether growth is sustainable given current infrastructure.`,
+question:"What operational decision do you take?",
 options:[
-{t:"Pivot branding",c:-10,m:+10,p:+5},
-{t:"Limited edition drop",c:-5,m:+8,p:+6},
-{t:"Meme campaign",c:+5,m:+3,p:+3},
-{t:"Do nothing",c:0,m:-8,p:-5}
+opt("Invest in backend systems",-30,10,18,"Stability reassures institutional investors."),
+opt("Delay upgrades to preserve cash",10,-5,-6,"Liquidity improves but operational risk grows."),
+opt("Hire experienced executive",-20,8,15,"Strategic depth strengthens long-term outlook."),
+opt("Push teams harder for output",5,-8,-12,"Short-term performance strains morale.")
 ]
 },
+
 {
-q:"Major competitor enters.",
+context:`Market sentiment shifts across the ${industry}. Capital markets are watching your next move carefully.`,
+question:"Final strategic pivot?",
 options:[
-{t:"Undercut pricing",c:-20,m:+15,p:-5},
-{t:"Differentiate",c:-10,m:+10,p:+10},
-{t:"Sue them",c:-15,m:-5,p:-10},
-{t:"Collaborate",c:-5,m:+12,p:+8}
+opt("Diversify into adjacent category",-25,12,20,"Expansion narrative excites long-term investors."),
+opt("Double down on core product",10,-2,12,"Focus improves profitability discipline."),
+opt("Seek strategic merger",-35,18,22,"Scale advantage lifts valuation despite integration risk."),
+opt("Optimize margins and hold steady",15,-3,10,"Efficiency improves but growth moderates.")
 ]
 }
+
 ];
+
+}
+
+/* ================= GAME LOOP ================= */
 
 function nextQuestion(){
 
-if(questionIndex>=dailyQuestions.length){
- return endDay();
+if(qIndex>=currentSet.length){
+return finalReport();
 }
 
-const current=dailyQuestions[questionIndex];
-
-story.innerHTML=`DAY ${day} — Decision ${questionIndex+1}/5<br><br>${current.q}`;
+let q=currentSet[qIndex];
+story.innerHTML=`${q.context}<br><br><strong>${q.question}</strong>`;
 choices.innerHTML="";
 
-current.options.forEach(opt=>{
- const btn=document.createElement("button");
- btn.textContent=opt.t;
- btn.onclick=()=>{
-   cash+=opt.c;
-   marketShare+=opt.m;
-   sharePrice+=opt.p;
-   questionIndex++;
-   updateHUD();
-   nextQuestion();
- };
- choices.appendChild(btn);
+q.options.forEach(o=>{
+let b=document.createElement("button");
+b.textContent=o.t;
+b.onclick=()=>{
+cash+=o.c;
+market+=o.m;
+share+=o.s;
+
+story.innerHTML=`${o.con}`;
+choices.innerHTML="";
+let next=document.createElement("button");
+next.textContent="Continue";
+next.onclick=()=>{
+qIndex++;
+updateHUD();
+nextQuestion();
+};
+choices.appendChild(next);
+updateHUD();
+};
+choices.appendChild(b);
 });
 }
 
-function endDay(){
+/* ================= FINAL REPORT ================= */
 
-if(cash<=0 || marketShare<=0){
- story.innerHTML="BANKRUPTCY. The market erased you.";
- choices.innerHTML="";
- const btn=document.createElement("button");
- btn.textContent="RESTART TIMELINE";
- btn.onclick=()=>location.reload();
- choices.appendChild(btn);
- return;
+function finalReport(){
+
+let narrative="";
+if(market>40 && share>150){
+narrative="You have emerged as a defining force in this dystopian economy, blending disciplined strategy with bold execution.";
+}
+else if(cash<60){
+narrative="Aggressive expansion constrained liquidity, limiting your strategic flexibility.";
+}
+else{
+narrative="You survive as a calculated operator — not dominant, but resilient in volatility.";
 }
 
-if(marketShare>=60 && sharePrice>=150){
- story.innerHTML="MARKET DOMINANCE ACHIEVED.";
- choices.innerHTML="";
- const btn=document.createElement("button");
- btn.textContent="RESTART EMPIRE";
- btn.onclick=()=>location.reload();
- choices.appendChild(btn);
- return;
-}
+story.innerHTML=`
+Final Report<br><br>
+Over five strategic inflection points, ${company} navigated the ${industry} landscape with its ${product}. 
+It now commands ${market}% market share, holds $${cash}M in capital, and trades at ${share}. 
+${narrative}
+`;
 
-story.innerHTML=`DAY ${day} COMPLETE.<br><br>Continue?`;
 choices.innerHTML="";
-const btn=document.createElement("button");
-btn.textContent="PROCEED";
-btn.onclick=()=>{
- day++;
- dailyLoop();
-};
-choices.appendChild(btn);
-
+let restart=document.createElement("button");
+restart.textContent="Restart Simulation";
+restart.onclick=()=>location.reload();
+choices.appendChild(restart);
 updateHUD();
 }
 
 </script>
-
 </body>
 </html>
