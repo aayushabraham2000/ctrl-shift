@@ -7,10 +7,10 @@
 <style>
 body{margin:0;background:#07070c;color:#00ff41;font-family:'Share Tech Mono',monospace;}
 #game{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;}
-#story{max-width:900px;margin-bottom:20px;min-height:140px;line-height:1.6;}
-button{padding:10px;margin:6px;border:2px solid #00ff41;background:transparent;color:#00ff41;width:720px;max-width:95%;cursor:pointer;text-align:left;}
+#story{max-width:900px;margin-bottom:20px;min-height:150px;line-height:1.6;}
+button{padding:10px;margin:6px;border:2px solid #00ff41;background:transparent;color:#00ff41;width:760px;max-width:95%;cursor:pointer;text-align:left;}
 button:hover{background:#00ff41;color:black;}
-input{padding:8px;border:2px solid #00ff41;background:black;color:#00ff41;margin:10px;}
+input{padding:8px;border:2px solid #00ff41;background:black;color:#00ff41;margin:8px;width:350px;}
 #hud{position:absolute;top:15px;left:15px;font-size:13px;line-height:1.5;}
 h1{font-family:'Press Start 2P';font-size:18px;}
 </style>
@@ -27,58 +27,59 @@ h1{font-family:'Press Start 2P';font-size:18px;}
 
 <script>
 
-/* ================= STATE ================= */
+/* ================= CORE STATE ================= */
 
 let company="", industry="", product="";
-let cash=100, market=15, share=100;
+let cash=100, market=10, share=100;
 let qIndex=0;
-let currentSet=[];
+let questions=[];
+let history=[];
 
 const story=document.getElementById("story");
 const choices=document.getElementById("choices");
 const hud=document.getElementById("hud");
 
-/* ================= INDUSTRY + PRODUCT CONTEXT ================= */
+/* ================= INDUSTRIES ================= */
 
-const data = {
+const industries = {
 
 "Nostalgia Trap":{
-desc:"Real life has become sterile and hyper-digitized. The past is now the most expensive commodity.",
+desc:"Reality is digitized and emotionally sterile. The past is now the most addictive commodity.",
 products:{
-"Scent-Memory Candles":"Candles that release curated 90s-era scent notes and embedded vinyl audio nostalgia.",
-"Retro-Lens Contacts":"Wearable lenses that filter reality into grainy 35mm emotional cinema.",
-"First-Love Chewing Gum":"Biochemical gum that recreates the hormonal rush of teenage butterflies.",
-"Analog Dead Zones":"Signal-free physical spaces where people pay to disconnect."
+"Scent-Memory Candles":"Candles that release curated 90s scent profiles while embedded vinyl tracks play softly.",
+"Retro-Lens Contacts":"Wearable lenses turning modern life into grainy cinematic memory.",
+"First-Love Chewing Gum":"Biochemical gum recreating teenage dopamine rush.",
+"Analog Dead Zones":"Signal-free premium spaces where silence is rented by the hour."
 }
 },
 
 "Weather Paywall":{
-desc:"Climate collapse has privatized nature. Breeze, sunlight and snow are subscription experiences.",
+desc:"Nature has been privatized. Sunlight, breeze and rain now operate on subscription tiers.",
 products:{
-"Pocket-Sun Flashlights":"Portable devices that emit calibrated Vitamin D sunlight.",
-"Subscription Rain-Clouds":"On-demand atmospheric systems for private rainfall.",
-"Snow-in-a-Can":"Compressed aesthetic snowfall for events and luxury experiences.",
-"Wind-Chill Scarves":"Wearable thermoregulators that maintain a perfect 20°C."
+"Pocket-Sun Flashlights":"Portable calibrated Vitamin D sunlight emitters.",
+"Subscription Rain-Clouds":"On-demand rainfall for private estates.",
+"Snow-in-a-Can":"Compressed snowfall for luxury experiences.",
+"Wind-Chill Scarves":"Wearables maintaining a perfect 20°C climate bubble."
 }
 },
 
 "Flavor Debt":{
-desc:"Natural food has lost flavor. Taste is now digitally engineered.",
+desc:"Natural taste is extinct. Flavor is digitally engineered over neutral nutrition paste.",
 products:{
-"Electric Truffle Spoons":"Utensils that electrically simulate premium flavors.",
-"Flavor-Sync Apps":"Apps that overlay taste sensations onto water and neutral foods.",
-"Sizzling-Audio Headphones":"Audio tech that tricks the brain into perceiving crunch.",
-"Last Burger NFT":"A blockchain key granting symbolic ownership of the last real cow."
+"Electric Truffle Spoons":"Utensils electrically simulating gourmet flavors.",
+"Flavor-Sync Apps":"Apps overlaying taste perception onto water.",
+"Sizzling-Audio Headphones":"Audio tech that makes soft food feel crunchy.",
+"Last Burger NFT":"Blockchain key symbolizing ownership of the final real cow."
 }
 },
 
 "Nightmare Insurance":{
-desc:"Dreams are neural-linked and vulnerable to advertising hacks.",
+desc:"Dreams are neural-linked and vulnerable to subconscious advertising.",
 products:{
 "Firewall Pillows":"Signal-blocking sleep hardware.",
-"Dream-Security AI":"AI that intercepts subconscious ad intrusions.",
-"Nightmare-to-Comedy Converter":"Dream modulation software turning fear into levity.",
-"Sleep-State Encryption Keys":"Biometric locks securing dream access."
+"Dream-Security AI":"AI intercepting ad-based nightmares.",
+"Nightmare-to-Comedy Converter":"Software turning fear dreams into comic arcs.",
+"Sleep-State Encryption Keys":"Biometric dream-lock security."
 }
 }
 
@@ -97,19 +98,20 @@ Share Price: ${share}
 `;
 }
 
-/* ================= LOGIN ================= */
+/* ================= START ================= */
 
 function start(){
-story.innerHTML="Enter your company name to begin.";
+story.innerHTML="Enter your Company Name to begin.";
 choices.innerHTML="";
-let input=document.createElement("input");
+let nameInput=document.createElement("input");
+nameInput.placeholder="Company Name";
 let btn=document.createElement("button");
-btn.textContent="Initialize";
+btn.textContent="Launch Company";
 btn.onclick=()=>{
-company=input.value||"Unnamed Corp";
+company=nameInput.value||"Unnamed Corp";
 chooseIndustry();
 };
-choices.appendChild(input);
+choices.appendChild(nameInput);
 choices.appendChild(btn);
 }
 start();
@@ -119,9 +121,9 @@ start();
 function chooseIndustry(){
 story.innerHTML="Select Industry";
 choices.innerHTML="";
-Object.keys(data).forEach(i=>{
+Object.keys(industries).forEach(i=>{
 let b=document.createElement("button");
-b.innerHTML=`<strong>${i}</strong><br>${data[i].desc}`;
+b.innerHTML=`<strong>${i}</strong><br>${industries[i].desc}`;
 b.onclick=()=>{industry=i; chooseProduct();};
 choices.appendChild(b);
 });
@@ -130,83 +132,114 @@ choices.appendChild(b);
 /* ================= PRODUCT SELECTION ================= */
 
 function chooseProduct(){
-story.innerHTML=`${data[industry].desc}<br><br>Select Product`;
+story.innerHTML=`${industries[industry].desc}<br><br>Select Product`;
 choices.innerHTML="";
-Object.keys(data[industry].products).forEach(p=>{
+Object.keys(industries[industry].products).forEach(p=>{
 let b=document.createElement("button");
-b.innerHTML=`<strong>${p}</strong><br>${data[industry].products[p]}`;
-b.onclick=()=>{product=p; beginSimulation();};
+b.innerHTML=`<strong>${p}</strong><br>${industries[industry].products[p]}`;
+b.onclick=()=>{product=p; fundRaise();};
 choices.appendChild(b);
 });
 }
 
-/* ================= QUESTION GENERATOR ================= */
+/* ================= FUND RAISE ================= */
 
-function beginSimulation(){
-cash=100; market=15; share=100; qIndex=0;
-generateQuestions();
+function fundRaise(){
+story.innerHTML=`
+Investors circle around ${product} in the ${industry} economy. 
+The future feels unstable — but profitable. 
+Choose your funding strategy.
+`;
+choices.innerHTML="";
+
+let options=[
+{t:"Raise $50M at steady valuation",c:50,s:10,m:5,con:"The funding round closes smoothly; capital flows in and confidence hums quietly across the market."},
+{t:"Raise $120M at aggressive valuation",c:120,s:25,m:12,con:"Headlines erupt. Analysts call you bold — expectations now shadow every move you make."},
+{t:"Bootstrap cautiously",c:10,s:-5,m:-3,con:"You retain control, but the climb feels steeper without deep pockets."},
+{t:"Strategic corporate partner",c:70,s:15,m:10,con:"A powerful ally joins your orbit, opening doors you couldn’t access alone."}
+];
+
+options.forEach(o=>{
+let b=document.createElement("button");
+b.textContent=o.t;
+b.onclick=()=>{
+cash+=o.c;
+share+=o.s;
+market+=o.m;
+story.innerHTML=o.con;
+choices.innerHTML="";
+let next=document.createElement("button");
+next.textContent="Enter Market";
+next.onclick=()=>{
 updateHUD();
+generateQuestions();
 nextQuestion();
+};
+choices.appendChild(next);
+updateHUD();
+};
+choices.appendChild(b);
+});
 }
+
+/* ================= QUESTION ENGINE ================= */
 
 function generateQuestions(){
 
-function opt(t,c,m,s,con){return{t,c,m,s,con};}
-
-currentSet=[
+questions=[
 
 {
-context:`${company} launches its ${product} in the ${industry} sector. Early adopters are intrigued, but demand is unpredictable.`,
-question:"How do you manage initial growth?",
+context:`${company} begins rollout of ${product}. Early adopters are intrigued, but sustainable demand is uncertain.`,
+question:"How do you approach your initial market strategy?",
 options:[
-opt("Increase pricing to test willingness to pay",20,-2,15,"Margins improve, but adoption slows slightly."),
-opt("Scale production aggressively",-25,12,8,"Growth accelerates, but cash reserves thin."),
-opt("Launch limited edition batch",10,6,12,"Exclusivity strengthens brand perception."),
-opt("License technology early",25,8,-5,"Cash rises quickly, though long-term control weakens.")
+{t:"Premium positioning",c:-10,m:8,s:18,con:"You position ${product} as aspirational; exclusivity strengthens perception and investors lean forward."},
+{t:"Mass penetration pricing",c:-30,m:15,s:-5,con:"Adoption surges quickly, but your margins thin under the weight of expansion."},
+{t:"Controlled beta release",c:5,m:5,s:10,con:"Scarcity builds mystique, and anticipation grows steadily."},
+{t:"Enterprise contracts first",c:20,m:10,s:12,con:"Large clients stabilize revenue, anchoring your early growth curve."}
 ]
 },
 
 {
-context:`Media scrutiny rises around the societal implications of ${product}. Analysts debate ethics versus innovation.`,
-question:"What is your strategic communication move?",
+context:`Public conversation intensifies around the ethics and societal impact of ${product}.`,
+question:"What is your response?",
 options:[
-opt("Publish transparent impact study",-15,8,18,"Credibility improves and investor trust strengthens."),
-opt("Reposition messaging toward lifestyle benefits",-10,6,8,"Consumer sentiment stabilizes modestly."),
-opt("Lobby regulators quietly",-20,3,10,"Short-term protection boosts stability but raises governance concerns."),
-opt("Ignore and focus on revenue",5,-8,-12,"Share price dips as uncertainty grows.")
+{t:"Commission independent audit",c:-15,m:6,s:20,con:"Transparency reframes the narrative; trust grows as scrutiny softens."},
+{t:"Reframe messaging strategically",c:-10,m:8,s:12,con:"The story shifts subtly, and consumers begin to view you differently."},
+{t:"Engage regulators privately",c:-20,m:4,s:8,con:"Behind closed doors, protections form — though whispers remain."},
+{t:"Ignore the noise",c:10,m:-6,s:-15,con:"Silence breeds speculation, and market confidence wavers."}
 ]
 },
 
 {
-context:`A competitor undercuts pricing with a simplified version of ${product}.`,
-question:"Your competitive response?",
+context:`A rival enters the ${industry} with a simplified alternative to ${product}.`,
+question:"How do you respond competitively?",
 options:[
-opt("Differentiate with premium positioning",-10,8,20,"Brand equity increases valuation resilience."),
-opt("Engage in price war",-30,15,-8,"Market share rises but margins erode."),
-opt("Acquire competitor",-40,20,18,"Dominance grows though balance sheet risk rises."),
-opt("Focus on niche segment",5,-3,10,"Profitability steadies but expansion slows.")
+{t:"Differentiate with innovation",c:-20,m:10,s:22,con:"You widen the gap technologically, and the market recognizes the moat."},
+{t:"Match their price",c:-40,m:18,s:-8,con:"Customers flood in, but profitability feels fragile."},
+{t:"Acquire the rival",c:-60,m:25,s:18,con:"The takeover reshapes the landscape; you now control the battlefield."},
+{t:"Retreat to niche dominance",c:5,m:-4,s:12,con:"You narrow your focus, fortifying a smaller but loyal base."}
 ]
 },
 
 {
-context:`Internal leadership questions whether growth is sustainable given current infrastructure.`,
-question:"What operational decision do you take?",
+context:`Internal strain tests your operational backbone as demand fluctuates.`,
+question:"Where do you invest next?",
 options:[
-opt("Invest in backend systems",-30,10,18,"Stability reassures institutional investors."),
-opt("Delay upgrades to preserve cash",10,-5,-6,"Liquidity improves but operational risk grows."),
-opt("Hire experienced executive",-20,8,15,"Strategic depth strengthens long-term outlook."),
-opt("Push teams harder for output",5,-8,-12,"Short-term performance strains morale.")
+{t:"Infrastructure scaling",c:-35,m:12,s:20,con:"Systems strengthen beneath the surface, creating resilience few can see but many value."},
+{t:"Marketing acceleration",c:-25,m:20,s:5,con:"Awareness explodes, though sustainability remains uncertain."},
+{t:"Leadership talent",c:-20,m:8,s:15,con:"Strategic clarity sharpens; the company begins thinking longer-term."},
+{t:"Cost optimization",c:20,m:-6,s:-10,con:"Margins improve, but momentum cools perceptibly."}
 ]
 },
 
 {
-context:`Market sentiment shifts across the ${industry}. Capital markets are watching your next move carefully.`,
-question:"Final strategic pivot?",
+context:`Investors now decide whether ${company} becomes legend or cautionary tale within ${industry}.`,
+question:"Your defining move?",
 options:[
-opt("Diversify into adjacent category",-25,12,20,"Expansion narrative excites long-term investors."),
-opt("Double down on core product",10,-2,12,"Focus improves profitability discipline."),
-opt("Seek strategic merger",-35,18,22,"Scale advantage lifts valuation despite integration risk."),
-opt("Optimize margins and hold steady",15,-3,10,"Efficiency improves but growth moderates.")
+{t:"Expand into adjacencies",c:-30,m:15,s:25,con:"You signal ambition; growth narratives amplify your valuation."},
+{t:"Consolidate and optimize",c:25,m:-4,s:12,con:"Stability strengthens, though explosive growth slows."},
+{t:"Pursue strategic merger",c:-40,m:22,s:28,con:"Scale transforms perception; you now operate at a different altitude."},
+{t:"Preserve capital conservatively",c:30,m:-6,s:5,con:"You choose caution, securing survival over spectacle."}
 ]
 }
 
@@ -218,11 +251,11 @@ opt("Optimize margins and hold steady",15,-3,10,"Efficiency improves but growth 
 
 function nextQuestion(){
 
-if(qIndex>=currentSet.length){
+if(qIndex>=questions.length){
 return finalReport();
 }
 
-let q=currentSet[qIndex];
+let q=questions[qIndex];
 story.innerHTML=`${q.context}<br><br><strong>${q.question}</strong>`;
 choices.innerHTML="";
 
@@ -233,8 +266,8 @@ b.onclick=()=>{
 cash+=o.c;
 market+=o.m;
 share+=o.s;
-
-story.innerHTML=`${o.con}`;
+history.push(o.con);
+story.innerHTML=o.con;
 choices.innerHTML="";
 let next=document.createElement("button");
 next.textContent="Continue";
@@ -254,29 +287,24 @@ choices.appendChild(b);
 
 function finalReport(){
 
-let narrative="";
-if(market>40 && share>150){
-narrative="You have emerged as a defining force in this dystopian economy, blending disciplined strategy with bold execution.";
-}
-else if(cash<60){
-narrative="Aggressive expansion constrained liquidity, limiting your strategic flexibility.";
-}
-else{
-narrative="You survive as a calculated operator — not dominant, but resilient in volatility.";
-}
-
-story.innerHTML=`
-Final Report<br><br>
-Over five strategic inflection points, ${company} navigated the ${industry} landscape with its ${product}. 
-It now commands ${market}% market share, holds $${cash}M in capital, and trades at ${share}. 
-${narrative}
+let performanceStory = `
+In the ${industry} economy, ${company} shaped its destiny through calculated risks and decisive pivots. 
+Each move — from capital strategy to competitive response — compounded into momentum or restraint. 
+Now holding ${market}% of the market, with $${cash}M in reserves and a share price of ${share}, 
+the company stands as ${market>50 ? "a dominant force rewriting its category." :
+share>150 ? "a high-flying disruptor still balancing risk." :
+cash<80 ? "an ambitious venture constrained by capital." :
+"a resilient player navigating uncertainty with discipline."}
 `;
+
+story.innerHTML=performanceStory;
 
 choices.innerHTML="";
 let restart=document.createElement("button");
 restart.textContent="Restart Simulation";
 restart.onclick=()=>location.reload();
 choices.appendChild(restart);
+
 updateHUD();
 }
 
