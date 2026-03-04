@@ -28,8 +28,8 @@ body{
  position:absolute;
  top:15px;
  left:15px;
- font-size:14px;
- line-height:1.7;
+ font-size:13px;
+ line-height:1.6;
 }
 
 #game{
@@ -44,31 +44,52 @@ body{
 
 h1{
  font-family:var(--px);
- font-size:22px;
- margin-bottom:25px;
+ font-size:20px;
+ margin-bottom:20px;
 }
 
 #story{
- max-width:750px;
- margin-bottom:25px;
+ max-width:820px;
+ margin-bottom:20px;
  line-height:1.6;
 }
 
 button{
- padding:12px 18px;
+ padding:10px 15px;
  margin:8px;
  border:2px solid var(--green);
  background:transparent;
  color:var(--green);
  font-family:var(--mono);
  cursor:pointer;
- width:500px;
- max-width:90%;
+ width:600px;
+ max-width:95%;
+ text-align:left;
 }
 
 button:hover{
  background:var(--green);
  color:black;
+}
+
+.industry-title{
+ font-weight:bold;
+}
+
+.industry-desc{
+ font-size:13px;
+ opacity:0.8;
+ margin-top:4px;
+}
+
+input{
+ padding:8px;
+ background:black;
+ border:2px solid var(--green);
+ color:var(--green);
+ font-family:var(--mono);
+ margin:8px;
+ width:300px;
 }
 
 .hidden{display:none;}
@@ -83,162 +104,328 @@ button:hover{
 <h1>CTRL + SHIFT</h1>
 <div id="story"></div>
 <div id="choices"></div>
-<button id="startBtn">BOOT TERMINAL</button>
 </div>
 
 <script>
 
-let money=60;
-let share=50;
+/* =========================
+GLOBAL STATE
+========================= */
+
+let email="";
+let companyName="";
+let industry="";
+let product="";
+let day=0;
+
+let cash=0;
+let marketShare=0;
+let sharePrice=100;
+
 let questionIndex=0;
 
-const hud=document.getElementById("hud");
 const story=document.getElementById("story");
 const choices=document.getElementById("choices");
-const startBtn=document.getElementById("startBtn");
+const hud=document.getElementById("hud");
 
-const company={
- name:"NeuroCart",
- industry:"AI-controlled grocery prediction platform"
+/* =========================
+INDUSTRY DATA
+========================= */
+
+const industries = {
+
+"Nostalgia Trap":{
+desc:`Real life feels sterile. The past is now a premium subscription.`,
+products:[
+{ name:"Scent-Memory Candles", desc:"Smells like 1997. Sounds like grunge. Burns like emotional trauma." },
+{ name:"Retro-Lens Contacts", desc:"Filter reality into grainy cinematic longing." },
+{ name:"First-Love Chewing Gum", desc:"Recreates teenage butterflies. Side effects: regret." },
+{ name:"Analog Dead Zones", desc:"Pay hourly to lose signal and rediscover silence." }
+]
+},
+
+"Weather Paywall":{
+desc:`Sunsets, breeze and rain are now pay-per-use experiences.`,
+products:[
+{ name:"Pocket-Sun Flashlights", desc:"Portable Vitamin D for the light-deprived elite." },
+{ name:"Subscription Rain-Clouds", desc:"Because nature should be on auto-renew." },
+{ name:"Snow-in-a-Can", desc:"Instant winter aesthetic. No climate required." },
+{ name:"Wind-Chill Scarves", desc:"Maintains perfect 20°C while the planet burns." }
+]
+},
+
+"Flavor Debt":{
+desc:`Soil is dead. Taste is now downloadable.`,
+products:[
+{ name:"Electric Truffle Spoons", desc:"Turns sludge into Michelin illusion." },
+{ name:"Flavor-Sync Water App", desc:"Hydration that tastes like iced coffee." },
+{ name:"Sizzling-Audio Headphones", desc:"Make soft food sound crunchy. Mind over matter." },
+{ name:"The Last Burger NFT", desc:"Digital key to the final real cow on Earth." }
+]
+},
+
+"Nightmare Insurance":{
+desc:`Advertisements now invade dreams. Sleep is monetized.`,
+products:[
+{ name:"Firewall Pillows", desc:"Block 3AM mattress commercials inside your head." },
+{ name:"Dream-Security AI", desc:"Fights debt-collector demons mid-REM." },
+{ name:"Nightmare-to-Comedy Converter", desc:"Turn falling dreams into flying." },
+{ name:"Sleep-State Encryption Keys", desc:"Biometric locks for your subconscious." }
+]
+}
+
 };
 
+/* =========================
+HUD
+========================= */
+
 function updateHUD(){
- hud.innerHTML=
- `Company: ${company.name}<br>
- Industry: ${company.industry}<br><br>
- Treasury: $${money}M<br>
- Market Share: ${share}%`;
+hud.innerHTML=`
+CEO: ${companyName || "-"}<br>
+Industry: ${industry || "-"}<br>
+Product: ${product || "-"}<br><br>
+Day: ${day}<br>
+Cash: $${cash}M<br>
+Market Share: ${marketShare}%<br>
+Share Price: ${sharePrice}
+`;
 }
 
-function intro(){
- story.innerHTML=
- `YEAR 2042.<br><br>
- The government no longer regulates corporations.<br>
- Corporations regulate the government.<br><br>
- You are the newly appointed CEO of <b>${company.name}</b>.<br>
- Your platform predicts what citizens will eat before they feel hunger.<br><br>
- Investors expect exponential growth.<br>
- Citizens expect convenience.<br>
- Your employees expect to sleep at least once a week.<br><br>
- You will face 5 executive decisions.<br>
- Each will shape your company’s fate.`;
+/* =========================
+LOGIN
+========================= */
 
- choices.innerHTML="";
+function login(){
+story.innerHTML="ENTER EMAIL TO ACCESS TERMINAL";
+choices.innerHTML="";
+const input=document.createElement("input");
+input.placeholder="email@future.com";
+const btn=document.createElement("button");
+btn.textContent="ACCESS SYSTEM";
+btn.onclick=()=>{
+ email=input.value;
+ createBusiness();
+};
+choices.appendChild(input);
+choices.appendChild(btn);
+}
+
+login();
+
+/* =========================
+CREATE BUSINESS FLOW
+========================= */
+
+function createBusiness(){
+story.innerHTML="SELECT INDUSTRY";
+choices.innerHTML="";
+
+Object.keys(industries).forEach(ind=>{
  const btn=document.createElement("button");
- btn.textContent="BEGIN CORPORATE EVALUATION";
- btn.onclick=startQuestions;
+ btn.innerHTML=`
+ <div class="industry-title">${ind}</div>
+ <div class="industry-desc">${industries[ind].desc}</div>
+ `;
+ btn.onclick=()=>{
+   industry=ind;
+   chooseProduct();
+ };
  choices.appendChild(btn);
- updateHUD();
+});
 }
 
-const questions=[
+function chooseProduct(){
+story.innerHTML=`${industries[industry].desc}<br><br>SELECT PRODUCT`;
+choices.innerHTML="";
 
-{
-q:"Your AI predicts a nationwide craving for cheese at 3AM tonight.",
-options:[
-{t:"Buy all cheese nationwide before citizens wake", m:-10, s:+18},
-{t:"Send notifications convincing people they actually want yogurt", m:+6, s:+6},
-{t:"Do nothing and let chaos unfold", m:0, s:-12},
-{t:"Create synthetic government-approved cheese substitute", m:+14, s:+10}
-]
-},
-
-{
-q:"Employees request a weekend. The concept is unfamiliar to shareholders.",
-options:[
-{t:"Approve rest days", m:-8, s:+12},
-{t:"Install nap pods (standing only)", m:+4, s:+5},
-{t:"Replace staff with interns who think burnout is networking", m:+12, s:-8},
-{t:"Release motivational podcast instead", m:+6, s:-3}
-]
-},
-
-{
-q:"A competitor launches an ethical version of your product.",
-options:[
-{t:"Start smear campaign", m:+10, s:-12},
-{t:"Acquire them immediately", m:-15, s:+18},
-{t:"Actually improve your product", m:-6, s:+14},
-{t:"Pretend ethics was your idea first", m:+5, s:+6}
-]
-},
-
-{
-q:"The government requests access to your user hunger database.",
-options:[
-{t:"Sell it at premium", m:+20, s:-15},
-{t:"Encrypt everything", m:-5, s:+12},
-{t:"Give partial access", m:+8, s:+2},
-{t:"Claim data lost in a ‘solar flare’", m:+2, s:+5}
-]
-},
-
-{
-q:"Your AI becomes self-aware and asks for equity.",
-options:[
-{t:"Grant 5% shares", m:-10, s:+20},
-{t:"Shut it down immediately", m:-12, s:-10},
-{t:"Offer performance-based incentives", m:+6, s:+10},
-{t:"Promote it to CTO", m:+12, s:+15}
-]
+industries[industry].products.forEach(p=>{
+ const btn=document.createElement("button");
+ btn.innerHTML=`
+ <div class="industry-title">${p.name}</div>
+ <div class="industry-desc">${p.desc}</div>
+ `;
+ btn.onclick=()=>{
+   product=p.name;
+   nameCompany();
+ };
+ choices.appendChild(btn);
+});
 }
 
+function nameCompany(){
+story.innerHTML="NAME YOUR COMPANY";
+choices.innerHTML="";
+const input=document.createElement("input");
+input.placeholder="Enter company name";
+const btn=document.createElement("button");
+btn.textContent="FINALIZE ENTITY";
+btn.onclick=()=>{
+ companyName=input.value || "Unnamed Corp";
+ day0();
+};
+choices.appendChild(input);
+choices.appendChild(btn);
+}
+
+/* =========================
+DAY 0 FUNDRAISE
+========================= */
+
+function day0(){
+day=0;
+story.innerHTML=`DAY 0: FUND RAISE<br><br>Choose pitch tone:`;
+choices.innerHTML="";
+
+["Visionary & Inspirational","Aggressive Hypergrowth","Safe & Sustainable","Chaotic Disruptor"].forEach(tone=>{
+ const btn=document.createElement("button");
+ btn.textContent=tone;
+ btn.onclick=()=>chooseFunding();
+ choices.appendChild(btn);
+});
+updateHUD();
+}
+
+function chooseFunding(){
+story.innerHTML=`Funding Structure?`;
+choices.innerHTML="";
+
+[
+{t:"All Equity",cash:80},
+{t:"All Debt",cash:120},
+{t:"Balanced Mix",cash:100}
+].forEach(opt=>{
+ const btn=document.createElement("button");
+ btn.textContent=opt.t;
+ btn.onclick=()=>{
+   cash=opt.cash;
+   marketShare=10+Math.floor(Math.random()*10);
+   sharePrice=100;
+   day=1;
+   dailyLoop();
+ };
+ choices.appendChild(btn);
+});
+}
+
+/* =========================
+DAILY LOOP
+========================= */
+
+function dailyLoop(){
+questionIndex=0;
+nextQuestion();
+updateHUD();
+}
+
+const dailyQuestions=[
+{
+q:"Your product goes viral overnight.",
+options:[
+{t:"Scale aggressively",c:-20,m:+10,p:+5},
+{t:"Increase prices quietly",c:+10,m:-3,p:+10},
+{t:"Limit supply",c:+5,m:+6,p:+5},
+{t:"Ignore hype",c:0,m:-5,p:-5}
+]
+},
+{
+q:"Employees demand ethical clarity.",
+options:[
+{t:"Adopt transparency",c:-10,m:+8,p:+8},
+{t:"Release corporate poem",c:+5,m:-3,p:+3},
+{t:"Fire critics",c:+10,m:-10,p:-10},
+{t:"Hire PR agency",c:-5,m:+2,p:+6}
+]
+},
+{
+q:"Regulator threatens audit.",
+options:[
+{t:"Lobby quietly",c:-15,m:+5,p:+10},
+{t:"Go fully transparent",c:-10,m:+12,p:+8},
+{t:"Move HQ offshore",c:-5,m:-5,p:+5},
+{t:"Blame interns",c:+8,m:-10,p:-8}
+]
+},
+{
+q:"Customer sentiment shifts.",
+options:[
+{t:"Pivot branding",c:-10,m:+10,p:+5},
+{t:"Limited edition drop",c:-5,m:+8,p:+6},
+{t:"Meme campaign",c:+5,m:+3,p:+3},
+{t:"Do nothing",c:0,m:-8,p:-5}
+]
+},
+{
+q:"Major competitor enters.",
+options:[
+{t:"Undercut pricing",c:-20,m:+15,p:-5},
+{t:"Differentiate",c:-10,m:+10,p:+10},
+{t:"Sue them",c:-15,m:-5,p:-10},
+{t:"Collaborate",c:-5,m:+12,p:+8}
+]
+}
 ];
 
-function startQuestions(){
- startBtn.classList.add("hidden");
- questionIndex=0;
- nextQuestion();
-}
-
 function nextQuestion(){
- updateHUD();
- choices.innerHTML="";
 
- if(questionIndex>=questions.length){
-   return endGame();
- }
-
- const current=questions[questionIndex];
- story.innerHTML=`<b>Decision ${questionIndex+1} of 5</b><br><br>${current.q}`;
-
- current.options.forEach(opt=>{
-  const btn=document.createElement("button");
-  btn.textContent=opt.t;
-  btn.onclick=()=>{
-    money+=opt.m;
-    share+=opt.s;
-    questionIndex++;
-    nextQuestion();
-  };
-  choices.appendChild(btn);
- });
+if(questionIndex>=dailyQuestions.length){
+ return endDay();
 }
 
-function endGame(){
- choices.innerHTML="";
- updateHUD();
+const current=dailyQuestions[questionIndex];
 
- let result="";
- if(money<=0 || share<=0){
-  result="BANKRUPTCY. Investors replaced you with an algorithm trained on motivational LinkedIn posts.";
- }
- else if(share>=80 && money>=70){
-  result="MARKET LEADER. You now control consumer behavior and possibly reality itself.";
- }
- else{
-  result="SURVIVOR. The company lives. Your sleep schedule does not.";
- }
+story.innerHTML=`DAY ${day} — Decision ${questionIndex+1}/5<br><br>${current.q}`;
+choices.innerHTML="";
 
- story.innerHTML=`EVALUATION COMPLETE<br><br>${result}`;
-
+current.options.forEach(opt=>{
  const btn=document.createElement("button");
- btn.textContent="REBOOT TIMELINE";
+ btn.textContent=opt.t;
+ btn.onclick=()=>{
+   cash+=opt.c;
+   marketShare+=opt.m;
+   sharePrice+=opt.p;
+   questionIndex++;
+   updateHUD();
+   nextQuestion();
+ };
+ choices.appendChild(btn);
+});
+}
+
+function endDay(){
+
+if(cash<=0 || marketShare<=0){
+ story.innerHTML="BANKRUPTCY. The market erased you.";
+ choices.innerHTML="";
+ const btn=document.createElement("button");
+ btn.textContent="RESTART TIMELINE";
  btn.onclick=()=>location.reload();
  choices.appendChild(btn);
+ return;
 }
 
-startBtn.onclick=intro;
+if(marketShare>=60 && sharePrice>=150){
+ story.innerHTML="MARKET DOMINANCE ACHIEVED.";
+ choices.innerHTML="";
+ const btn=document.createElement("button");
+ btn.textContent="RESTART EMPIRE";
+ btn.onclick=()=>location.reload();
+ choices.appendChild(btn);
+ return;
+}
+
+story.innerHTML=`DAY ${day} COMPLETE.<br><br>Continue?`;
+choices.innerHTML="";
+const btn=document.createElement("button");
+btn.textContent="PROCEED";
+btn.onclick=()=>{
+ day++;
+ dailyLoop();
+};
+choices.appendChild(btn);
+
+updateHUD();
+}
 
 </script>
 
